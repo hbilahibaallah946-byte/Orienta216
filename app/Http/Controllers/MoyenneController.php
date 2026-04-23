@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EtudiantProfile;
 use App\Models\Moyenne;
+use App\Services\ProfilService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class MoyenneController extends Controller
 {
+    public function __construct(private ProfilService $profilService) {}
     public function store(Request $request)
     {
         try {
@@ -39,7 +42,11 @@ class MoyenneController extends Controller
                 'score' => $validated['score'],
                 'score_plus_7' => $validated['score_plus_7']
             ]);
-            
+
+            if (EtudiantProfile::where('etudiant_id', Auth::id())->exists()) {
+                $this->profilService->computeRecommandations(Auth::user());
+            }
+
             return response()->json($moyenne, 201);
             
         } catch (\Exception $e) {

@@ -10,7 +10,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="font-bold text-lg">🏆 Mes Recommandations</h2>
-                    <p class="text-xs text-indigo-200 mt-0.5">Basées sur votre profil et questionnaire</p>
+                    <p class="text-xs text-indigo-200 mt-0.5">Score mixte : académique, compatibilité questionnaire, compétitivité (seuils ministère)</p>
                 </div>
                 <button @click="recalculer" :disabled="loading"
                         class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-full transition flex items-center gap-1">
@@ -43,7 +43,7 @@
             <div v-else class="space-y-3">
 
                 <!-- Top 3 filières -->
-                <div v-for="reco in recommandations" :key="reco.rang"
+                <div v-for="reco in recommandations.slice(0, 3)" :key="reco.rang"
                      class="relative overflow-hidden rounded-xl border transition hover:shadow-md cursor-pointer"
                      :class="reco.rang === 1
                         ? 'border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20'
@@ -75,8 +75,8 @@
                                 <!-- Barre de compatibilité -->
                                 <div class="mt-2">
                                     <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                                        <span>Compatibilité</span>
-                                        <span>{{ compatibiliteLabel(reco.score) }}</span>
+                                        <span>Score global</span>
+                                        <span>{{ globalLabel(reco.score) }}</span>
                                     </div>
                                     <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                                         <div class="h-2 rounded-full transition-all duration-700"
@@ -84,6 +84,21 @@
                                              :style="{ width: reco.score + '%' }"></div>
                                     </div>
                                 </div>
+
+                                <div v-if="reco.scores_detail" class="mt-2 grid grid-cols-3 gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                    <span>Acad. {{ reco.scores_detail.academique ?? '—' }}%</span>
+                                    <span>Compat. {{ reco.scores_detail.compatibilite ?? '—' }}%</span>
+                                    <span>Compét. {{ reco.scores_detail.competitivite ?? '—' }}%</span>
+                                </div>
+                                <p v-if="reco.score_reference_marche != null" class="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                                    Dernier orienté (réf.) : {{ reco.score_reference_marche }}
+                                </p>
+                                <p v-if="reco.bonus_7?.recommande_avec_bonus" class="text-[10px] text-green-600 dark:text-green-400 mt-1 font-semibold">
+                                    ⭐ Très recommandée avec la bonification +7%
+                                </p>
+                                <p v-else-if="reco.bonus_7?.proche" class="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
+                                    ⏳ Proche du seuil — +7% peut la rendre accessible
+                                </p>
 
                                 <!-- Badge contextuel -->
                                 <div class="mt-2">
@@ -93,7 +108,7 @@
                                             : reco.score >= 60
                                             ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
                                             : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'">
-                                        {{ compatibiliteMessage(reco.score) }}
+                                        {{ globalMessage(reco.score) }}
                                     </span>
                                 </div>
                             </div>
@@ -146,7 +161,13 @@ const recommandations  = ref([])
 const fetchProfil = async () => {
     loading.value = true
     try {
-        const res  = await fetch('/api/profil/moi')
+        const res  = await fetch('/api/profil/moi', {
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+        })
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`)
+        }
         const data = await res.json()
         profil.value          = data.profil
         recommandations.value = data.recommandations || []
@@ -160,9 +181,19 @@ const fetchProfil = async () => {
 const recalculer = async () => {
     loading.value = true
     try {
-        await fetch('/api/profil/recalculer', { method: 'POST',
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content }
+        const res = await fetch('/api/profil/recalculer', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            },
+            credentials: 'same-origin',
         })
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`)
+        }
         await fetchProfil()
     } catch (e) {
         console.error('recalculer:', e)
@@ -170,17 +201,17 @@ const recalculer = async () => {
     }
 }
 
-const compatibiliteLabel = (score) => {
-    if (score >= 80) return '✅ Excellente'
-    if (score >= 60) return '👍 Bonne'
-    if (score >= 40) return '⚠️ Moyenne'
+const globalLabel = (score) => {
+    if (score >= 80) return '✅ Très haut'
+    if (score >= 60) return '👍 Bon'
+    if (score >= 40) return '⚠️ Moyen'
     return '❓ Faible'
 }
 
-const compatibiliteMessage = (score) => {
-    if (score >= 80) return 'Correspond très bien à votre profil'
-    if (score >= 60) return 'Bonne option, à explorer'
-    return 'Option possible, discutez avec un conseiller'
+const globalMessage = (score) => {
+    if (score >= 80) return 'Très bonne position dans le classement intelligent'
+    if (score >= 60) return 'Piste solide à creuser'
+    return 'À affiner avec un conseiller'
 }
 
 onMounted(fetchProfil)

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Questionnaire;
 use App\Models\Question;
+use App\Models\Recommandation;
 use App\Models\Reponse;
 use App\Models\User;
 use App\Services\ProfilService;
@@ -177,7 +178,13 @@ class QuestionnaireController extends Controller
 
         // Recalcul profil + recommandations (silencieux si tables absentes)
         try {
-            $this->profilService->buildProfile(Auth::user());
+            $etudiant = Auth::user();
+            $this->profilService->buildProfile($etudiant);
+
+            $recoCount = Recommandation::where('etudiant_id', $etudiant->id)->count();
+            if ($recoCount === 0) {
+                Log::info("ProfilService: 0 recommandation générée pour l'étudiant {$etudiant->id}");
+            }
         } catch (\Throwable $e) {
             Log::warning('ProfilService: ' . $e->getMessage());
         }

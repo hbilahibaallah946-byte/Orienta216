@@ -53,6 +53,19 @@
                     </div>
                 </div>
 
+                <!-- Tableau de bord recommandations (scores objectifs) -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg transition-colors duration-300 mb-6">
+                    <div class="p-6">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                            📊 Recommandations intelligentes
+                        </h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            Classement mixte (questionnaire, moyenne bac, seuils « dernier orienté » importés). Même vue que l’onglet Recommandations du chat.
+                        </p>
+                        <RecoDashboardPanel :data="recoData" :loading="recoLoading" />
+                    </div>
+                </div>
+
                 <!-- Moyennes de l'étudiant -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg transition-colors duration-300 mb-6">
                     <div class="p-6">
@@ -253,14 +266,34 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import RecoDashboardPanel from '@/Components/RecoDashboardPanel.vue'
 
 const props = defineProps({
     etudiant: Object,
     moyennes: Array,
     favoris: Array
+})
+
+const recoData = ref(null)
+const recoLoading = ref(true)
+
+onMounted(async () => {
+    try {
+        const res = await fetch(`/api/profil/etudiant/${props.etudiant.id}`, {
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+        })
+        if (res.ok) {
+            recoData.value = await res.json()
+        }
+    } catch (e) {
+        console.error('reco profil etudiant:', e)
+    } finally {
+        recoLoading.value = false
+    }
 })
 
 const selectedMoyenne = ref(null)

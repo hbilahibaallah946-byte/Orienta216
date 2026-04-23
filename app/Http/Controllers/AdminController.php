@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\Filiere;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth; // Ajouter cet import
+use Illuminate\Support\Facades\Auth; 
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -27,154 +27,157 @@ class AdminController extends Controller
         ]);
     }
 
-    
-
-
-
-
-    // ... vos autres méthodes ...
-
     public function statistiques()
-    {
-        // Statistiques de base
-        $totalUsers = User::where('status', 'approved')->count();
-        $etudiants = User::where('role', 'etudiant')->where('status', 'approved')->count();
-        $conseillers = User::where('role', 'conseiller')->where('status', 'approved')->count();
-        $filieres = Filiere::count();
-        
-        // Calcul des évolutions (comparaison avec le mois dernier)
-        $moisDernier = Carbon::now()->subMonth();
-        $moisActuel = Carbon::now();
-        
-        // Évolution des étudiants
-        $etudiantsMoisDernier = User::where('role', 'etudiant')
-            ->where('status', 'approved')
-            ->whereBetween('created_at', [$moisDernier->startOfMonth(), $moisDernier->endOfMonth()])
+{
+    $now         = \Carbon\Carbon::now();
+    $moisDernier = $now->copy()->subMonth();
+ 
+    // ── 1. KPI ────────────────────────────────────────────────────────────────
+    $totalEtudiants   = \App\Models\User::where('role', 'etudiant')->where('status', 'approved')->count();
+    $totalConseillers = \App\Models\User::where('role', 'conseiller')->where('status', 'approved')->count();
+    $totalPending     = \App\Models\User::where('status', 'pending')->count();
+    $pendingEtudiants = \App\Models\User::where('role', 'etudiant')->where('status', 'pending')->count();
+    $pendingConseillers = \App\Models\User::where('role', 'conseiller')->where('status', 'pending')->count();
+ 
+    // Croissances vs mois précédent
+    $growth = function (string $role) use ($now, $moisDernier): float {
+        $prev = \App\Models\User::where('role', $role)->where('status', 'approved')
+            ->whereBetween('created_at', [$moisDernier->copy()->startOfMonth(), $moisDernier->copy()->endOfMonth()])
             ->count();
-        
-        $etudiantsMoisActuel = User::where('role', 'etudiant')
-            ->where('status', 'approved')
-            ->whereBetween('created_at', [$moisActuel->startOfMonth(), $moisActuel->endOfMonth()])
+        $curr = \App\Models\User::where('role', $role)->where('status', 'approved')
+            ->whereBetween('created_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])
             ->count();
-        
-        $etudiantsGrowth = $etudiantsMoisDernier > 0 
-            ? round((($etudiantsMoisActuel - $etudiantsMoisDernier) / $etudiantsMoisDernier) * 100, 2)
-            : ($etudiantsMoisActuel > 0 ? 100 : 0);
-        
-        // Évolution des conseillers
-        $conseillersMoisDernier = User::where('role', 'conseiller')
-            ->where('status', 'approved')
-            ->whereBetween('created_at', [$moisDernier->startOfMonth(), $moisDernier->endOfMonth()])
-            ->count();
-        
-        $conseillersMoisActuel = User::where('role', 'conseiller')
-            ->where('status', 'approved')
-            ->whereBetween('created_at', [$moisActuel->startOfMonth(), $moisActuel->endOfMonth()])
-            ->count();
-        
-        $conseillersGrowth = $conseillersMoisDernier > 0 
-            ? round((($conseillersMoisActuel - $conseillersMoisDernier) / $conseillersMoisDernier) * 100, 2)
-            : ($conseillersMoisActuel > 0 ? 100 : 0);
-        
-        // Évolution des utilisateurs totaux
-        $usersMoisDernier = User::where('status', 'approved')
-            ->whereBetween('created_at', [$moisDernier->startOfMonth(), $moisDernier->endOfMonth()])
-            ->count();
-        
-        $usersMoisActuel = User::where('status', 'approved')
-            ->whereBetween('created_at', [$moisActuel->startOfMonth(), $moisActuel->endOfMonth()])
-            ->count();
-        
-        $usersGrowth = $usersMoisDernier > 0 
-            ? round((($usersMoisActuel - $usersMoisDernier) / $usersMoisDernier) * 100, 2)
-            : ($usersMoisActuel > 0 ? 100 : 0);
-        
-        // Évolution des filières
-        $filieresMoisDernier = Filiere::whereBetween('created_at', [$moisDernier->startOfMonth(), $moisDernier->endOfMonth()])->count();
-        $filieresMoisActuel = Filiere::whereBetween('created_at', [$moisActuel->startOfMonth(), $moisActuel->endOfMonth()])->count();
-        
-        $filieresGrowth = $filieresMoisDernier > 0 
-            ? round((($filieresMoisActuel - $filieresMoisDernier) / $filieresMoisDernier) * 100, 2)
-            : ($filieresMoisActuel > 0 ? 100 : 0);
-        
-        // Inscriptions du mois
-        $inscriptionsMois = User::where('status', 'approved')
-            ->whereBetween('created_at', [$moisActuel->startOfMonth(), $moisActuel->endOfMonth()])
-            ->count();
-        
-        // Demandes en attente
-        $enAttente = User::where('status', 'pending')->count();
-        
-        // Étudiants en attente de réponse (exemple: ceux qui ont postulé mais pas encore traités)
-        $enAttenteReponse = User::where('role', 'etudiant')
-            ->where('status', 'pending')
-            ->count();
-        
-        // Évolution des inscriptions (8 dernières semaines)
-        $evolution = [
-            'labels' => [],
-            'etudiants' => [],
-            'conseillers' => []
+        return $prev > 0 ? round((($curr - $prev) / $prev) * 100, 1) : ($curr > 0 ? 100 : 0);
+    };
+ 
+    $etudiantsGrowth   = $growth('etudiant');
+    $conseillersGrowth = $growth('conseiller');
+ 
+    // ── 2. Croissance utilisateurs par mois — Line chart (12 derniers mois) ───
+    $croissanceMensuelle = [];
+    for ($i = 11; $i >= 0; $i--) {
+        $mois  = $now->copy()->subMonths($i);
+        $debut = $mois->copy()->startOfMonth();
+        $fin   = $mois->copy()->endOfMonth();
+ 
+        $croissanceMensuelle[] = [
+            'label'       => $mois->format('M Y'),
+            'etudiants'   => \App\Models\User::where('role', 'etudiant')
+                ->where('status', 'approved')
+                ->whereBetween('created_at', [$debut, $fin])
+                ->count(),
+            'conseillers' => \App\Models\User::where('role', 'conseiller')
+                ->where('status', 'approved')
+                ->whereBetween('created_at', [$debut, $fin])
+                ->count(),
         ];
-        
-        for ($i = 7; $i >= 0; $i--) {
-            $semaine = Carbon::now()->subWeeks($i);
-            $debutSemaine = $semaine->copy()->startOfWeek();
-            $finSemaine = $semaine->copy()->endOfWeek();
-            
-            $evolution['labels'][] = 'S' . $semaine->weekOfYear;
-            $evolution['etudiants'][] = User::where('role', 'etudiant')
-                ->where('status', 'approved')
-                ->whereBetween('created_at', [$debutSemaine, $finSemaine])
-                ->count();
-            $evolution['conseillers'][] = User::where('role', 'conseiller')
-                ->where('status', 'approved')
-                ->whereBetween('created_at', [$debutSemaine, $finSemaine])
-                ->count();
-        }
-        
-        // Répartition par filière (top 5)
-        $filieresRepartition = Filiere::withCount(['etudiants' => function($query) {
-            $query->where('status', 'approved');
-        }])
-        ->orderBy('etudiants_count', 'desc')
-        ->limit(5)
-        ->get()
-        ->map(function($filiere) {
-            return [
-                'label' => $filiere->nom,
-                'valeur' => $filiere->etudiants_count
-            ];
-        });
-        
-        // Si pas de données, mettre des valeurs par défaut
-        if ($filieresRepartition->isEmpty()) {
-            $filieresRepartition = collect([
-                ['label' => 'Aucune donnée', 'valeur' => 0]
-            ]);
-        }
-        
-        return Inertia::render('SuperAdmin/Statistiques', [
-            'stats' => [
-                'users' => $totalUsers,
-                'usersGrowth' => $usersGrowth,
-                'etudiants' => $etudiants,
-                'etudiantsGrowth' => $etudiantsGrowth,
-                'conseillers' => $conseillers,
-                'conseillersGrowth' => $conseillersGrowth,
-                'filieres' => $filieres,
-                'filieresGrowth' => $filieresGrowth,
-                'inscriptionsMois' => $inscriptionsMois,
-                'enAttente' => $enAttente,
-                'enAttenteReponse' => $enAttenteReponse,
-                'evolution' => $evolution,
-                'filieresRepartition' => [
-                    'labels' => $filieresRepartition->pluck('label')->toArray(),
-                    'valeurs' => $filieresRepartition->pluck('valeur')->toArray()
-                ]
-            ]
-        ]);
     }
+ 
+    // ── 3. Répartition utilisateurs — Pie ─────────────────────────────────────
+    $totalApproved = $totalEtudiants + $totalConseillers
+        + \App\Models\User::where('role', 'admin')->where('status', 'approved')->count();
+ 
+    // ── 4. Comptes en attente par rôle — Column ───────────────────────────────
+    $pendingParRole = [
+        ['role' => 'Étudiants',   'nb' => $pendingEtudiants],
+        ['role' => 'Conseillers', 'nb' => $pendingConseillers],
+    ];
+ 
+    // ── 5. Inscriptions par semaine (8 dernières semaines) — Area ─────────────
+    $inscriptionsHebdo = [];
+    for ($i = 7; $i >= 0; $i--) {
+        $semaine = $now->copy()->subWeeks($i);
+        $debut   = $semaine->copy()->startOfWeek();
+        $fin     = $semaine->copy()->endOfWeek();
+ 
+        $inscriptionsHebdo[] = [
+            'label'       => 'S' . $semaine->weekOfYear,
+            'etudiants'   => \App\Models\User::where('role', 'etudiant')
+                ->whereBetween('created_at', [$debut, $fin])->count(),
+            'conseillers' => \App\Models\User::where('role', 'conseiller')
+                ->whereBetween('created_at', [$debut, $fin])->count(),
+        ];
+    }
+ 
+    // ── 6. Top filières (par nombre d'étudiants inscrits) — Horizontal Bar ────
+    $topFilieres = \App\Models\Filiere::withCount(['etudiants' => fn($q) =>
+            $q->where('status', 'approved')])
+        ->orderByDesc('etudiants_count')
+        ->limit(8)
+        ->get()
+        ->map(fn($f) => [
+            'nom' => $f->specialite ?? $f->nom ?? '—',
+            'nb'  => $f->etudiants_count,
+        ]);
+ 
+    // ── 7. Activité chat — Column-Line (30 derniers jours) ────────────────────
+    $activiteChat = [];
+    for ($i = 29; $i >= 0; $i -= 3) {
+        $jour  = $now->copy()->subDays($i);
+        $debut = $jour->copy()->startOfDay();
+        $fin   = $jour->copy()->addDays(2)->endOfDay();
+ 
+        $activiteChat[] = [
+            'label'          => $jour->format('d/m'),
+            'conversations'  => \App\Models\Conversation::whereBetween('created_at', [$debut, $fin])->count(),
+            'messages'       => \App\Models\Message::whereBetween('created_at', [$debut, $fin])->count(),
+        ];
+    }
+ 
+    return Inertia::render('SuperAdmin/Statistiques', [
+        'stats' => [
+            // KPI
+            'totalEtudiants'     => $totalEtudiants,
+            'totalConseillers'   => $totalConseillers,
+            'totalPending'       => $totalPending,
+            'etudiantsGrowth'    => $etudiantsGrowth,
+            'conseillersGrowth'  => $conseillersGrowth,
+ 
+            // Pie — répartition utilisateurs
+            'pieUtilisateurs' => [
+                'labels' => ['Étudiants', 'Conseillers', 'Admins'],
+                'valeurs' => [
+                    $totalEtudiants,
+                    $totalConseillers,
+                    max(0, $totalApproved - $totalEtudiants - $totalConseillers),
+                ],
+            ],
+ 
+            // Column — pending par rôle
+            'pendingParRole' => [
+                'labels' => collect($pendingParRole)->pluck('role')->toArray(),
+                'valeurs' => collect($pendingParRole)->pluck('nb')->toArray(),
+            ],
+ 
+            // Line — croissance mensuelle (12 mois)
+            'croissanceMensuelle' => [
+                'labels'      => collect($croissanceMensuelle)->pluck('label')->toArray(),
+                'etudiants'   => collect($croissanceMensuelle)->pluck('etudiants')->toArray(),
+                'conseillers' => collect($croissanceMensuelle)->pluck('conseillers')->toArray(),
+            ],
+ 
+            // Area — inscriptions hebdo
+            'inscriptionsHebdo' => [
+                'labels'      => collect($inscriptionsHebdo)->pluck('label')->toArray(),
+                'etudiants'   => collect($inscriptionsHebdo)->pluck('etudiants')->toArray(),
+                'conseillers' => collect($inscriptionsHebdo)->pluck('conseillers')->toArray(),
+            ],
+ 
+            // Bar horizontal — top filières
+            'topFilieres' => [
+                'labels' => $topFilieres->pluck('nom')->toArray(),
+                'valeurs' => $topFilieres->pluck('nb')->toArray(),
+            ],
+ 
+            // Column-Line — activité chat
+            'activiteChat' => [
+                'labels'        => collect($activiteChat)->pluck('label')->toArray(),
+                'conversations' => collect($activiteChat)->pluck('conversations')->toArray(),
+                'messages'      => collect($activiteChat)->pluck('messages')->toArray(),
+            ],
+        ],
+    ]);
+}
 
 
     public function filieres()

@@ -47,7 +47,7 @@
                                 </a>
                                 <!-- ✅ Nouveau lien -->
                                 <Link :href="route('conseiller.university-pdf.manage')" class="nav-link">
-                                      🏛️ Universités privées
+                                      Universités privées
                                 </Link>
                             </template>
                             

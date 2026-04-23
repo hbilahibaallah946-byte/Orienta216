@@ -1,347 +1,372 @@
 <template>
     <AuthenticatedLayout>
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-8">
-                        <!-- Header avec message de bienvenue -->
-                        <div class="mb-8">
-                            <h1 class="text-3xl font-bold text-gray-900 mb-2">
-                                Bonjour, Administrateur! 
-                            </h1>
-                            <p class="text-gray-600">
-                                Voici ce qui se passe dans votre plateforme ce mois-ci.
-                            </p>
+        <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
+
+                <!-- Header -->
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">📊 Statistiques Plateforme</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Vue d'ensemble de tous les utilisateurs</p>
+                </div>
+
+                <!-- ── KPI Cards ──────────────────────────────────────────── -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+                    <div class="bg-gradient-to-br from-indigo-600 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-2xl">🎓</span>
+                            <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">
+                                {{ etudiantsGrowthLabel }}
+                            </span>
                         </div>
+                        <p class="text-3xl font-bold">{{ stats.totalEtudiants }}</p>
+                        <p class="text-sm text-indigo-100 mt-1">Étudiants approuvés</p>
+                    </div>
 
-                        <!-- Cartes KPI (3 cartes comme dans l'image) -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <!-- Carte Total Utilisateurs -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div>
-                                        <p class="text-sm text-gray-500 font-medium mb-1">Total Utilisateurs</p>
-                                        <p class="text-3xl font-bold text-gray-900">{{ formatNumber(stats.users || 0) }}</p>
-                                    </div>
-                                    <div class="bg-blue-100 rounded-full p-3">
-                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span :class="stats.usersGrowth >= 0 ? 'text-green-600' : 'text-red-600'" class="text-sm font-medium">
-                                        {{ stats.usersGrowth >= 0 ? '+' : '' }}{{ stats.usersGrowth || 0 }}%
-                                    </span>
-                                    <span class="text-xs text-gray-500">Ce mois vs mois dernier</span>
-                                </div>
-                            </div>
-
-                            <!-- Carte Étudiants -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div>
-                                        <p class="text-sm text-gray-500 font-medium mb-1">Étudiants</p>
-                                        <p class="text-3xl font-bold text-gray-900">{{ formatNumber(stats.etudiants || 0) }}</p>
-                                    </div>
-                                    <div class="bg-green-100 rounded-full p-3">
-                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span :class="stats.etudiantsGrowth >= 0 ? 'text-green-600' : 'text-red-600'" class="text-sm font-medium">
-                                        {{ stats.etudiantsGrowth >= 0 ? '+' : '' }}{{ stats.etudiantsGrowth || 0 }}%
-                                    </span>
-                                    <span class="text-xs text-gray-500">Ce mois vs mois dernier</span>
-                                </div>
-                            </div>
-
-                            <!-- Carte Conseillers -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div>
-                                        <p class="text-sm text-gray-500 font-medium mb-1">Conseillers</p>
-                                        <p class="text-3xl font-bold text-gray-900">{{ formatNumber(stats.conseillers || 0) }}</p>
-                                    </div>
-                                    <div class="bg-purple-100 rounded-full p-3">
-                                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span :class="stats.conseillersGrowth >= 0 ? 'text-green-600' : 'text-red-600'" class="text-sm font-medium">
-                                        {{ stats.conseillersGrowth >= 0 ? '+' : '' }}{{ stats.conseillersGrowth || 0 }}%
-                                    </span>
-                                    <span class="text-xs text-gray-500">Ce mois vs mois dernier</span>
-                                </div>
-                            </div>
+                    <div class="bg-gradient-to-br from-violet-600 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-violet-200 dark:shadow-violet-900/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-2xl">👨‍🏫</span>
+                            <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">
+                                {{ conseillersGrowthLabel }}
+                            </span>
                         </div>
+                        <p class="text-3xl font-bold">{{ stats.totalConseillers }}</p>
+                        <p class="text-sm text-violet-100 mt-1">Conseillers approuvés</p>
+                    </div>
 
-                        <!-- Deuxième ligne de cartes -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <!-- Carte Filières -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div>
-                                        <p class="text-sm text-gray-500 font-medium mb-1">Filières actives</p>
-                                        <p class="text-3xl font-bold text-gray-900">{{ stats.filieres || 0 }}</p>
-                                    </div>
-                                    <div class="bg-yellow-100 rounded-full p-3">
-                                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span :class="stats.filieresGrowth >= 0 ? 'text-green-600' : 'text-red-600'" class="text-sm font-medium">
-                                        {{ stats.filieresGrowth >= 0 ? '+' : '' }}{{ stats.filieresGrowth || 0 }}%
+                    <div class="bg-gradient-to-br from-amber-500 to-amber-400 rounded-2xl p-5 text-white shadow-lg shadow-amber-200 dark:shadow-amber-900/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-2xl">⏳</span>
+                            <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">En attente</span>
+                        </div>
+                        <p class="text-3xl font-bold">{{ stats.totalPending }}</p>
+                        <p class="text-sm text-amber-100 mt-1">Comptes à valider</p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-emerald-600 to-emerald-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-2xl">👥</span>
+                            <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">Total</span>
+                        </div>
+                        <p class="text-3xl font-bold">{{ stats.totalEtudiants + stats.totalConseillers }}</p>
+                        <p class="text-sm text-emerald-100 mt-1">Utilisateurs actifs</p>
+                    </div>
+                </div>
+
+                <!-- ── Ligne 2 : Pie + Pending Column ─────────────────────── -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Pie — répartition utilisateurs -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-4">
+                            🥧 Répartition des utilisateurs
+                        </h3>
+                        <div class="flex items-center gap-6">
+                            <canvas ref="pieUsersRef" style="max-width:180px;max-height:180px"></canvas>
+                            <div class="space-y-3">
+                                <div v-for="(label, i) in stats.pieUtilisateurs.labels" :key="i"
+                                     class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full flex-shrink-0"
+                                          :style="{ background: usersColors[i] }"></span>
+                                    <span class="text-sm text-gray-600 dark:text-gray-300">{{ label }}</span>
+                                    <span class="font-bold text-gray-900 dark:text-white ml-2">
+                                        {{ stats.pieUtilisateurs.valeurs[i] }}
                                     </span>
-                                    <span class="text-xs text-gray-500">Ce mois vs mois dernier</span>
-                                </div>
-                            </div>
-
-                            <!-- Carte Inscriptions récentes -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div>
-                                        <p class="text-sm text-gray-500 font-medium mb-1">Inscriptions ce mois</p>
-                                        <p class="text-3xl font-bold text-gray-900">{{ stats.inscriptionsMois || 0 }}</p>
-                                    </div>
-                                    <div class="bg-indigo-100 rounded-full p-3">
-                                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs text-gray-500">Nouveaux utilisateurs</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Section des diagrammes -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <!-- Diagramme d'évolution -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                                <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-lg font-semibold text-gray-900">Évolution des inscriptions</h3>
-                                    <span class="text-sm text-gray-500">Ce mois vs mois dernier</span>
-                                </div>
-                                <div class="relative" style="height: 300px;">
-                                    <canvas ref="evolutionChart"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- Diagramme par catégorie -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                                <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-lg font-semibold text-gray-900">Répartition par filière</h3>
-                                    <span class="text-sm text-gray-500">Top 5 filières</span>
-                                </div>
-                                <div class="relative" style="height: 300px;">
-                                    <canvas ref="categoryChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Statistiques supplémentaires (comme dans la capture) -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                            <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-2xl font-bold text-gray-900">{{ stats.enAttente || 0 }}</p>
-                                        <p class="text-sm text-gray-600 mt-1">inscriptions sont en attente de confirmation</p>
-                                    </div>
-                                    <div class="bg-orange-100 rounded-full p-3">
-                                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-2xl font-bold text-gray-900">{{ stats.enAttenteReponse || 0 }}</p>
-                                        <p class="text-sm text-gray-600 mt-1">étudiants sont en attente de réponse</p>
-                                    </div>
-                                    <div class="bg-blue-100 rounded-full p-3">
-                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                        </svg>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Column — comptes en attente par rôle -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-4">
+                            ⏳ Comptes en attente par rôle
+                        </h3>
+                        <canvas ref="columnPendingRef" style="max-height:200px"></canvas>
+                        <p class="text-xs text-center text-gray-400 mt-3">
+                            Total : <strong>{{ stats.totalPending }}</strong> compte(s) à valider
+                        </p>
+                    </div>
                 </div>
+
+                <!-- ── Ligne 3 : Line — Croissance mensuelle (12 mois) ─────── -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <h3 class="font-semibold text-gray-800 dark:text-white mb-1">
+                        📈 Croissance des utilisateurs (12 derniers mois)
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-4">Évolution mensuelle des étudiants et conseillers approuvés</p>
+                    <canvas ref="lineGrowthRef" style="max-height:240px"></canvas>
+                </div>
+
+                <!-- ── Ligne 4 : Area + Bar horizontal ───────────────────── -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Area — inscriptions hebdomadaires -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-4">
+                            🌊 Inscriptions par semaine
+                        </h3>
+                        <canvas ref="areaInscrRef" style="max-height:220px"></canvas>
+                    </div>
+
+                    <!-- Bar horizontal — top filières -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <h3 class="font-semibold text-gray-800 dark:text-white mb-4">
+                            🎓 Top filières (nb étudiants)
+                        </h3>
+                        <canvas ref="barFilieresRef" style="max-height:220px"></canvas>
+                    </div>
+                </div>
+
+                <!-- ── Ligne 5 : Column-Line — activité chat ──────────────── -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <h3 class="font-semibold text-gray-800 dark:text-white mb-1">
+                        💬 Activité du chat (30 derniers jours)
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-4">Conversations créées vs messages envoyés</p>
+                    <canvas ref="colLineRef" style="max-height:240px"></canvas>
+                </div>
+
             </div>
         </div>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import Chart from 'chart.js/auto'
 
 const props = defineProps({
-    stats: Object
+    stats: { type: Object, required: true },
 })
 
-const evolutionChart = ref(null)
-const categoryChart = ref(null)
-let evolutionChartInstance = null
-let categoryChartInstance = null
+// Canvas refs
+const pieUsersRef      = ref(null)
+const columnPendingRef = ref(null)
+const lineGrowthRef    = ref(null)
+const areaInscrRef     = ref(null)
+const barFilieresRef   = ref(null)
+const colLineRef       = ref(null)
 
-const formatNumber = (num) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+// Couleurs
+const usersColors = ['#4f46e5', '#7c3aed', '#9ca3af']
+
+// Labels croissance
+const etudiantsGrowthLabel = computed(() => {
+    const g = props.stats.etudiantsGrowth
+    return g >= 0 ? `+${g}%` : `${g}%`
+})
+const conseillersGrowthLabel = computed(() => {
+    const g = props.stats.conseillersGrowth
+    return g >= 0 ? `+${g}%` : `${g}%`
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const isDark   = () => document.documentElement.classList.contains('dark')
+const textColor = () => isDark() ? '#cbd5e1' : '#374151'
+const gridColor = () => isDark() ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'
+
+async function loadChart() {
+    const { Chart, registerables } = await import('chart.js')
+    Chart.register(...registerables)
+    return Chart
 }
 
-const createCharts = () => {
-    // Données simulées pour l'évolution (vous pouvez remplacer par vos vraies données)
-    const evolutionData = props.stats.evolution || {
-        labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'],
-        etudiants: [12, 19, 15, 22, 28, 35, 42, props.stats.etudiants || 0],
-        conseillers: [5, 8, 7, 10, 12, 14, 16, props.stats.conseillers || 0]
-    }
+// ─────────────────────────────────────────────────────────────────────────────
+// Montage
+// ─────────────────────────────────────────────────────────────────────────────
 
-    // Diagramme d'évolution (ligne)
-    if (evolutionChartInstance) {
-        evolutionChartInstance.destroy()
-    }
-    evolutionChartInstance = new Chart(evolutionChart.value, {
-        type: 'line',
+onMounted(async () => {
+    const Chart = await loadChart()
+    const tc = textColor()
+    const gc = gridColor()
+    const dark = isDark()
+
+    // 1. Pie — répartition utilisateurs
+    new Chart(pieUsersRef.value, {
+        type: 'pie',
         data: {
-            labels: evolutionData.labels,
-            datasets: [
-                {
-                    label: 'Étudiants',
-                    data: evolutionData.etudiants,
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'Conseillers',
-                    data: evolutionData.conseillers,
-                    borderColor: '#F59E0B',
-                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }
-            ]
+            labels:   props.stats.pieUtilisateurs.labels,
+            datasets: [{
+                data:            props.stats.pieUtilisateurs.valeurs,
+                backgroundColor: usersColors,
+                borderWidth:     2,
+                borderColor:     dark ? '#1e293b' : '#fff',
+            }],
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false
-                }
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.label} : ${ctx.parsed}` } },
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        display: true,
-                        color: '#E5E7EB'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
+        },
     })
 
-    // Données pour le diagramme par filière
-    const categoryData = props.stats.filieresRepartition || {
-        labels: ['Informatique', 'Gestion', 'Génie Civil', 'Électronique', 'Marketing'],
-        valeurs: [35, 28, 18, 12, 7]
-    }
-
-    // Diagramme à barres horizontales pour les catégories
-    if (categoryChartInstance) {
-        categoryChartInstance.destroy()
-    }
-    categoryChartInstance = new Chart(categoryChart.value, {
+    // 2. Column — pending par rôle
+    new Chart(columnPendingRef.value, {
         type: 'bar',
         data: {
-            labels: categoryData.labels,
+            labels:   props.stats.pendingParRole.labels,
             datasets: [{
-                label: 'Nombre d\'étudiants',
-                data: categoryData.valeurs,
-                backgroundColor: [
-                    '#3B82F6',
-                    '#10B981',
-                    '#F59E0B',
-                    '#8B5CF6',
-                    '#EF4444'
-                ],
-                borderRadius: 8
-            }]
+                label:           'Comptes en attente',
+                data:            props.stats.pendingParRole.valeurs,
+                backgroundColor: ['#f59e0b', '#f97316'],
+                borderRadius:    8,
+            }],
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y', // Barres horizontales comme dans la capture
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.raw} étudiants`
-                        }
-                    }
-                }
-            },
+            plugins: { legend: { display: false } },
             scales: {
-                x: {
-                    beginAtZero: true,
-                    grid: {
-                        display: true,
-                        color: '#E5E7EB'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Nombre d\'étudiants'
-                    }
-                },
-                y: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
+                x: { ticks: { color: tc, font: { size: 12 } }, grid: { display: false } },
+                y: { ticks: { color: tc }, grid: { color: gc } },
+            },
+        },
     })
-}
 
-onMounted(() => {
-    createCharts()
+    // 3. Line — croissance mensuelle
+    new Chart(lineGrowthRef.value, {
+        type: 'line',
+        data: {
+            labels: props.stats.croissanceMensuelle.labels,
+            datasets: [
+                {
+                    label:           'Étudiants',
+                    data:            props.stats.croissanceMensuelle.etudiants,
+                    borderColor:     '#4f46e5',
+                    backgroundColor: 'transparent',
+                    tension:         0.4,
+                    pointRadius:     4,
+                    pointBackgroundColor: '#4f46e5',
+                },
+                {
+                    label:           'Conseillers',
+                    data:            props.stats.croissanceMensuelle.conseillers,
+                    borderColor:     '#f59e0b',
+                    backgroundColor: 'transparent',
+                    tension:         0.4,
+                    pointRadius:     4,
+                    pointBackgroundColor: '#f59e0b',
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: tc, font: { size: 11 } } } },
+            scales: {
+                x: { ticks: { color: tc, font: { size: 10 } }, grid: { color: gc } },
+                y: { ticks: { color: tc }, grid: { color: gc } },
+            },
+        },
+    })
+
+    // 4. Area — inscriptions hebdomadaires
+    new Chart(areaInscrRef.value, {
+        type: 'line',
+        data: {
+            labels: props.stats.inscriptionsHebdo.labels,
+            datasets: [
+                {
+                    label:           'Étudiants',
+                    data:            props.stats.inscriptionsHebdo.etudiants,
+                    borderColor:     '#4f46e5',
+                    backgroundColor: 'rgba(79,70,229,0.2)',
+                    fill:            true,
+                    tension:         0.4,
+                    pointRadius:     3,
+                },
+                {
+                    label:           'Conseillers',
+                    data:            props.stats.inscriptionsHebdo.conseillers,
+                    borderColor:     '#7c3aed',
+                    backgroundColor: 'rgba(124,58,237,0.15)',
+                    fill:            true,
+                    tension:         0.4,
+                    pointRadius:     3,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: tc, font: { size: 11 } } } },
+            scales: {
+                x: { ticks: { color: tc }, grid: { color: gc } },
+                y: { ticks: { color: tc }, grid: { color: gc } },
+            },
+        },
+    })
+
+    // 5. Bar horizontal — top filières
+    new Chart(barFilieresRef.value, {
+        type: 'bar',
+        data: {
+            labels:   props.stats.topFilieres.labels,
+            datasets: [{
+                label:           'Étudiants',
+                data:            props.stats.topFilieres.valeurs,
+                backgroundColor: [
+                    '#4f46e5','#6366f1','#818cf8','#a5b4fc',
+                    '#c7d2fe','#7c3aed','#8b5cf6','#a78bfa',
+                ],
+                borderRadius:    4,
+            }],
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: tc }, grid: { color: gc } },
+                y: { ticks: { color: tc, font: { size: 10 } }, grid: { display: false } },
+            },
+        },
+    })
+
+    // 6. Column-Line — activité chat
+    new Chart(colLineRef.value, {
+        type: 'bar',
+        data: {
+            labels: props.stats.activiteChat.labels,
+            datasets: [
+                {
+                    type:            'bar',
+                    label:           'Conversations créées',
+                    data:            props.stats.activiteChat.conversations,
+                    backgroundColor: '#818cf8',
+                    borderRadius:    4,
+                    yAxisID:         'y',
+                },
+                {
+                    type:            'line',
+                    label:           'Messages échangés',
+                    data:            props.stats.activiteChat.messages,
+                    borderColor:     '#f59e0b',
+                    backgroundColor: 'transparent',
+                    tension:         0.4,
+                    pointRadius:     4,
+                    pointBackgroundColor: '#f59e0b',
+                    borderDash:      [4, 3],
+                    yAxisID:         'y1',
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: tc, font: { size: 11 } } } },
+            scales: {
+                x:  { ticks: { color: tc, font: { size: 10 } }, grid: { color: gc } },
+                y:  { ticks: { color: tc }, grid: { color: gc }, position: 'left' },
+                y1: {
+                    ticks: { color: '#f59e0b' },
+                    grid: { display: false },
+                    position: 'right',
+                },
+            },
+        },
+    })
 })
-
-watch(() => props.stats, () => {
-    createCharts()
-}, { deep: true })
 </script>
-
-<style scoped>
-canvas {
-    max-width: 100%;
-}
-</style>

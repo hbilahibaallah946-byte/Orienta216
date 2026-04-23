@@ -30,9 +30,38 @@ class RecommandationController extends Controller
         ]);
     }
 
+    /**
+     * POST /api/profil/recalculer-etudiant/{id}
+     * Recalcule profil + recommandations pour un étudiant (conseiller ou admin).
+     */
+    public function recalculerEtudiant(int $id)
+    {
+        $auth = Auth::user();
+        abort_unless(in_array($auth->role, ['conseiller', 'admin'], true), 403);
+
+        $etudiant = User::where('id', $id)
+            ->where('role', 'etudiant')
+            ->firstOrFail();
+
+        $this->profilService->buildProfile($etudiant);
+
+        $data = $this->profilService->getProfilComplet($etudiant);
+        $data['success'] = true;
+        $data['message_auto'] = $this->profilService->genererMessageAuto($etudiant);
+
+        return response()->json($data);
+    }
+
     /** GET /api/profil/etudiant/{id} — pour le conseiller */
     public function etudiant(int $id)
     {
+        $auth = Auth::user();
+        abort_unless(
+            in_array($auth->role, ['conseiller', 'admin'], true)
+            || ($auth->role === 'etudiant' && $auth->id === $id),
+            403
+        );
+
         $etudiant = User::where('id', $id)
             ->where('role', 'etudiant')
             ->firstOrFail();

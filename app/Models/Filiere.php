@@ -13,17 +13,21 @@ class Filiere extends Model
     protected $fillable = [
         'nom',
         'specialite',
+        'licence',
         'code',
         'universite',
         'type_bac',
         'formule',
-        'annee',
-        'criteres',    // ← AJOUTÉ
-        'description', // ← AJOUTÉ
+        'capacite',
+        'score_dernier_oriente_2025',
+        'criteres',
+        'description',
     ];
 
     protected $casts = [
-        'criteres' => 'array', // ← CRUCIAL : JSON string → PHP array
+        'criteres' => 'array',
+        'capacite' => 'integer',
+        'score_dernier_oriente_2025' => 'decimal:3',
     ];
 
     public function recommandations()

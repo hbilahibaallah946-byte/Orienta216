@@ -19,7 +19,7 @@
 
         <!-- ── Fenêtre chat ─────────────────────────────────────────── -->
         <transition name="chat-pop">
-            <div v-if="isOpen" class="chat-window">
+            <div v-if="isOpen" :class="['chat-window', recoWideClass]">
 
                 <!-- ════════════════════════════════
                      CONSEILLER — 3 colonnes
@@ -113,8 +113,18 @@
                         </div>
                     </aside>
 
+                    <div class="conseiller-main">
+                        <div class="chat-mode-tabs" role="tablist">
+                            <button type="button" role="tab" :aria-selected="conseillerTab === 'chat'"
+                                    :class="['chat-mode-tab', conseillerTab === 'chat' && 'chat-mode-tab--on']"
+                                    @click="conseillerTab = 'chat'">Chat</button>
+                            <button type="button" role="tab" :aria-selected="conseillerTab === 'reco'"
+                                    :class="['chat-mode-tab', conseillerTab === 'reco' && 'chat-mode-tab--on']"
+                                    @click="onConseillerRecoTab">Recommandations</button>
+                        </div>
+
                     <!-- Zone conversation -->
-                    <div class="chat-conv">
+                    <div v-show="conseillerTab === 'chat'" class="chat-conv">
                         <!-- Header -->
                         <div class="chat-conv__head">
                             <template v-if="activeConv">
@@ -167,35 +177,12 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <!-- Boutons suggestions filières -->
-                                    <div v-if="showSuggestions && profilData?.recommandations?.length"
-                                         class="smart-btns">
-                                        <button v-for="r in profilData.recommandations" :key="r.rang"
-                                                class="smart-btn"
-                                                @click="insertSuggestion(r)">
-                                            {{ ['🥇','🥈','🥉'][r.rang-1] }}
-                                            {{ r.filiere.nom }}
-                                            <span :class="'score score--'+scoreKey(r.score)">{{ r.score }}%</span>
-                                        </button>
-                                    </div>
                                 </template>
                             </template>
                         </div>
 
                         <!-- Input conseiller -->
                         <div v-if="activeConv" class="chat-input-zone">
-                            <!-- Réponses rapides -->
-                            <div class="qr-strip">
-                                <button class="qr" @click="newMsg = 'Bonjour ! Comment puis-je vous aider ?'">👋 Bonjour</button>
-                                <button class="qr" @click="newMsg = 'Pouvez-vous préciser votre question ?'">❓ Préciser</button>
-                                <button v-if="profilData?.recommandations?.[0]" class="qr qr--accent"
-                                        @click="newMsg = `Je vous recommande la filière ${profilData.recommandations[0].filiere.nom} (${profilData.recommandations[0].score}% de compatibilité).`">
-                                    🏆 Top filière
-                                </button>
-                                <button class="qr qr--ghost" @click="showSuggestions = !showSuggestions">
-                                    🤖 {{ showSuggestions ? 'Masquer' : 'Suggestions' }}
-                                </button>
-                            </div>
                             <div class="input-row">
                                 <input v-model="newMsg" @keyup.enter="sendConseillerMsg"
                                        class="chat-input" type="text"
@@ -206,12 +193,32 @@
                                     </svg>
                                 </button>
                             </div>
+                            <p class="input-hint">Entrée pour envoyer</p>
                         </div>
                     </div>
 
-                    <!-- Panneau profil -->
+                    <!-- Tableau de bord recommandations (objectif, hors chat) -->
+                    <div v-show="conseillerTab === 'reco'" class="chat-reco-dash">
+                        <div v-if="!activeConv" class="chat-center-box" style="padding:1rem">
+                            <span style="font-size:2rem">📊</span>
+                            <p style="font-size:.78rem;margin-top:.4rem;color:var(--ct2);text-align:center;max-width:14rem">
+                                Choisissez une conversation pour afficher le tableau de bord intelligent.
+                            </p>
+                        </div>
+                        <template v-else>
+                            <div class="reco-dash__toolbar">
+                                <span class="reco-dash__title">Recommandations</span>
+                                <button type="button" class="reco-dash__refresh" @click="refreshConseillerProfil">↻ Actualiser</button>
+                            </div>
+                            <RecoDashboardPanel :data="profilData" :loading="loadingProfil" />
+                        </template>
+                    </div>
+
+                    </div>
+
+                    <!-- Panneau profil (aperçu questionnaire — pas les scores détaillés) -->
                     <transition name="profil-slide">
-                        <div v-if="showProfil && activeConv" class="chat-profil">
+                        <div v-if="conseillerTab === 'chat' && showProfil && activeConv" class="chat-profil">
                             <p class="profil-head">🧾 Profil étudiant</p>
                             <div v-if="loadingProfil" class="chat-center-box py-4"><div class="spinner"></div></div>
                             <div v-else-if="profilData" class="profil-body">
@@ -234,23 +241,28 @@
                                             <span v-for="t in profilData.profil.preferences.slice(0, 5)" :key="t" class="tag tag--p">{{ t }}</span>
                                         </div>
                                     </div>
-                                    <div v-if="profilData.recommandations?.length" class="ps">
-                                        <p class="ps__label">🏆 Recommandations</p>
-                                        <div class="recos">
-                                            <div v-for="r in profilData.recommandations" :key="r.rang" class="reco">
-                                                <div class="reco__top">
-                                                    <span>{{ ['🥇','🥈','🥉'][r.rang-1] }}</span>
-                                                    <span class="reco__name">{{ r.filiere.nom }}</span>
-                                                    <span :class="'score score--'+scoreKey(r.score)">{{ r.score }}%</span>
-                                                </div>
-                                                <div class="reco__bar">
-                                                    <div :class="'reco__fill reco__fill--'+scoreKey(r.score)"
-                                                         :style="{width:r.score+'%'}"></div>
-                                                </div>
-                                                <p class="reco__lbl">{{ scoreLabel(r.score) }}</p>
-                                            </div>
-                                        </div>
+                                    <div v-if="!profilData.profil.interets?.length && !profilData.profil.competences?.length && !profilData.profil.preferences?.length" class="profil-acad-mini">
+                                        <p class="ps__label">📋 Résumé</p>
+                                        <p class="profil-acad-mini__txt">Aucun mot-clé questionnaire détecté (réponses vides ou questions sans mots-clés).</p>
                                     </div>
+                                    <div v-if="profilData.contexte_academique" class="profil-acad-mini">
+                                        <p class="ps__label">📊 Données académiques</p>
+                                        <ul class="profil-acad-mini__list">
+                                            <li v-if="profilData.contexte_academique.serie_bac_label">
+                                                Bac : <strong>{{ profilData.contexte_academique.serie_bac_label }}</strong>
+                                            </li>
+                                            <li v-if="profilData.contexte_academique.moyenne_generale != null">
+                                                Moyenne : <strong>{{ profilData.contexte_academique.moyenne_generale }}/20</strong>
+                                            </li>
+                                            <li v-if="profilData.contexte_academique.score_orientation_T != null">
+                                                Score T (×2) : <strong>{{ profilData.contexte_academique.score_orientation_T }}</strong>
+                                            </li>
+                                            <li v-if="profilData.contexte_academique.score_orientation_T_plus_7 != null">
+                                                Score +7&nbsp;% : <strong>{{ profilData.contexte_academique.score_orientation_T_plus_7 }}</strong>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <p class="profil-reco-hint">Scores détaillés (académique, marché, bac) : onglet « Recommandations ».</p>
                                 </template>
                                 <div v-else class="chat-center-box py-4">
                                     <span style="font-size:1.5rem">📝</span>
@@ -268,7 +280,16 @@
                      ÉTUDIANT
                 ════════════════════════════════ -->
                 <template v-else>
-                    <div class="etudiant-layout">
+                    <div class="etudiant-layout" :class="etudiantTab === 'reco' && 'etudiant-layout--reco'">
+                        <div class="chat-mode-tabs chat-mode-tabs--etudiant" role="tablist">
+                            <button type="button" role="tab" :aria-selected="etudiantTab === 'chat'"
+                                    :class="['chat-mode-tab', etudiantTab === 'chat' && 'chat-mode-tab--on']"
+                                    @click="etudiantTab = 'chat'">Chat</button>
+                            <button type="button" role="tab" :aria-selected="etudiantTab === 'reco'"
+                                    :class="['chat-mode-tab', etudiantTab === 'reco' && 'chat-mode-tab--on']"
+                                    @click="onEtudiantRecoTab">Recommandations</button>
+                        </div>
+                        <template v-if="etudiantTab === 'chat'">
                         <div class="etudiant-head">
                             <div class="etudiant-head__av">🎓</div>
                             <div style="flex:1">
@@ -325,6 +346,14 @@
                             </div>
                             <p class="input-hint">Entrée pour envoyer</p>
                         </div>
+                        </template>
+                        <div v-else class="chat-reco-dash chat-reco-dash--etudiant">
+                            <div class="reco-dash__toolbar">
+                                <span class="reco-dash__title">Mon tableau de bord</span>
+                                <button type="button" class="reco-dash__refresh" @click="loadEtudiantReco">↻ Actualiser</button>
+                            </div>
+                            <RecoDashboardPanel :data="profilMoi" :loading="loadingProfilMoi" />
+                        </div>
                     </div>
                 </template>
 
@@ -336,6 +365,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { usePage } from '@inertiajs/vue3'
+import RecoDashboardPanel from '@/Components/RecoDashboardPanel.vue'
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const page            = usePage()
@@ -343,13 +373,22 @@ const currentUserId   = page.props.auth.user.id
 const currentUserRole = page.props.auth.user.role
 const isConseiller    = computed(() => currentUserRole === 'conseiller')
 
+const recoWideClass = computed(() => {
+    if (isConseiller.value && conseillerTab.value === 'reco') return 'chat-window--reco-wide'
+    if (!isConseiller.value && etudiantTab.value === 'reco') return 'chat-window--reco-wide'
+    return ''
+})
+
 // ── UI global ─────────────────────────────────────────────────────────────────
 const isOpen       = ref(false)
 const unreadCount  = ref(0)
 const newMsg       = ref('')
 const msgBox       = ref(null)
 const showProfil   = ref(true)
-const showSuggestions = ref(false)
+const conseillerTab = ref('chat')
+const etudiantTab = ref('chat')
+const profilMoi = ref(null)
+const loadingProfilMoi = ref(false)
 
 // ── Conseiller ────────────────────────────────────────────────────────────────
 const enAttente        = ref([])
@@ -376,11 +415,42 @@ let pollingIntervalId = null
 let lastActivityTimestamp = Date.now()
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-// Récupération du token CSRF depuis la balise meta
+// Récupération du token CSRF (meta puis cookie XSRF)
 const csrf = () => {
-    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-    if (!token) console.warn('CSRF token non trouvé')
-    return token || ''
+    const meta = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    if (meta) return meta
+
+    const cookie = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('XSRF-TOKEN='))
+        ?.split('=')[1]
+
+    return cookie ? decodeURIComponent(cookie) : ''
+}
+
+const refreshCsrfToken = async () => {
+    const response = await fetch('/csrf-token', {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    if (!response.ok) throw new Error(`CSRF refresh failed (${response.status})`)
+    const data = await response.json()
+    if (data?.token) {
+        const meta = document.querySelector('meta[name="csrf-token"]')
+        if (meta) meta.setAttribute('content', data.token)
+    }
+}
+
+const csrfHeaders = () => {
+    const token = csrf()
+    return {
+        'X-CSRF-TOKEN': token,
+        'X-XSRF-TOKEN': token,
+    }
 }
 
 const fmtTime = (d) => {
@@ -396,9 +466,6 @@ const fmtTime = (d) => {
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
 }
 
-const scoreKey   = (s) => s >= 80 ? 'green' : s >= 60 ? 'yellow' : 'red'
-const scoreLabel = (s) => s >= 80 ? '✅ Très compatible' : s >= 60 ? '👍 Compatible' : '⚠️ À discuter'
-
 const scrollBottom = async () => {
     await nextTick()
     if (msgBox.value) {
@@ -413,19 +480,24 @@ const conseillerPlaceholder = computed(() => {
 })
 
 // Requêtes HTTP avec gestion CSRF
-const post = async (url, body = {}) => {
+const post = async (url, body = {}, retry = true) => {
     const response = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-CSRF-TOKEN': csrf(),
+            ...csrfHeaders(),
             'X-Requested-With': 'XMLHttpRequest'
         },
         credentials: 'same-origin',
         body: JSON.stringify(body),
     })
-    
+
+    if (response.status === 419 && retry) {
+        await refreshCsrfToken()
+        return post(url, body, false)
+    }
+
     if (!response.ok) {
         let errorMsg = `HTTP ${response.status}`
         try {
@@ -546,6 +618,9 @@ const toggleChat = async () => {
         activeConv.value = null
         profilData.value = null
         messages.value = []
+        conseillerTab.value = 'chat'
+        etudiantTab.value = 'chat'
+        profilMoi.value = null
     }
 }
 
@@ -557,6 +632,9 @@ const closeChat = () => {
     messages.value = []
     convId.value = null
     convStatut.value = null
+    conseillerTab.value = 'chat'
+    etudiantTab.value = 'chat'
+    profilMoi.value = null
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -625,6 +703,9 @@ const ouvrirConversation = async (c) => {
         const d = await get(`/api/chat/messages/${c.id}`)
         messages.value = d.messages ?? []
         profilData.value = d.profil ?? null
+        if (d.conversation?.etudiant_id && activeConv.value?.id === c.id) {
+            activeConv.value = { ...activeConv.value, etudiant_id: d.conversation.etudiant_id }
+        }
         lastActivityTimestamp = Date.now()
         
         // Marquer comme lus (avec gestion silencieuse des erreurs CSRF)
@@ -689,11 +770,54 @@ const sendMsgAuto = async () => {
     await sendConseillerMsg()
 }
 
-const insertSuggestion = (r) => {
-    const lbl = r.score >= 80 ? `correspond très bien à votre profil (${r.score}%)`
-              : r.score >= 60 ? `est une bonne option (${r.score}%)`
-              :                 `mérite réflexion (${r.score}%)`
-    newMsg.value = `📌 La filière ${r.filiere.nom} ${lbl}.`
+const onConseillerRecoTab = () => {
+    conseillerTab.value = 'reco'
+    if (activeConv.value) {
+        refreshConseillerProfil()
+    }
+}
+
+const refreshConseillerProfil = async () => {
+    if (!activeConv.value?.etudiant_id) return
+    loadingProfil.value = true
+    try {
+        const d = await post(`/api/profil/recalculer-etudiant/${activeConv.value.etudiant_id}`, {})
+        profilData.value = d
+    } catch (e) {
+        console.error('refreshConseillerProfil:', e)
+        try {
+            const d = await get(`/api/chat/messages/${activeConv.value.id}`)
+            profilData.value = d.profil ?? profilData.value
+        } catch (e2) {
+            console.error('refreshConseillerProfil fallback:', e2)
+        }
+    } finally {
+        loadingProfil.value = false
+    }
+}
+
+const loadEtudiantReco = async () => {
+    loadingProfilMoi.value = true
+    try {
+        const d = await post('/api/profil/recalculer', {})
+        profilMoi.value = d
+    } catch (e) {
+        console.error('loadEtudiantReco:', e)
+        try {
+            profilMoi.value = await get('/api/profil/moi')
+        } catch (e2) {
+            console.error('loadEtudiantReco fallback:', e2)
+        }
+    } finally {
+        loadingProfilMoi.value = false
+    }
+}
+
+const onEtudiantRecoTab = async () => {
+    etudiantTab.value = 'reco'
+    if (!profilMoi.value) {
+        await loadEtudiantReco()
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -804,9 +928,109 @@ onUnmounted(() => {
     width: min(820px, calc(100vw - 3rem));
     height: min(570px, calc(100vh - 5rem));
 }
+.chat-window--reco-wide {
+    width: min(960px, calc(100vw - 2rem));
+    height: min(620px, calc(100vh - 4rem));
+}
 .chat-root:has(.etudiant-layout) .chat-window {
     width: min(360px, calc(100vw - 2rem));
     height: min(530px, calc(100vh - 5rem));
+}
+.chat-root:has(.etudiant-layout--reco) .chat-window--reco-wide {
+    width: min(960px, calc(100vw - 2rem));
+    height: min(620px, calc(100vh - 4rem));
+}
+.conseiller-main {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+.chat-mode-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--cb);
+    background: var(--cs);
+    flex-shrink: 0;
+}
+.chat-mode-tabs--etudiant {
+    border-radius: var(--r) var(--r) 0 0;
+}
+.chat-mode-tab {
+    flex: 1;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--ct2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+.chat-mode-tab:hover { color: var(--cp); }
+.chat-mode-tab--on {
+    color: var(--cp);
+    border-bottom-color: var(--cp);
+    background: var(--cs2);
+}
+.chat-reco-dash {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 0.35rem 0.5rem 0.5rem;
+    background: var(--cs2);
+    display: flex;
+    flex-direction: column;
+}
+.chat-reco-dash--etudiant { flex: 1; min-height: 0; }
+.reco-dash__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.35rem;
+    flex-shrink: 0;
+}
+.reco-dash__title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--ct);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.reco-dash__refresh {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 8px;
+    border: 1px solid var(--cb);
+    background: var(--cs);
+    color: var(--ct2);
+    cursor: pointer;
+}
+.reco-dash__refresh:hover { border-color: var(--cp); color: var(--cp); }
+.profil-acad-mini {
+    margin-top: 0.35rem;
+    padding: 0.4rem 0.45rem;
+    border-radius: 8px;
+    background: var(--cs2, #f8fafc);
+    border: 1px solid var(--cb, #e2e8f0);
+    font-size: 0.65rem;
+    color: var(--ct2, #64748b);
+}
+:global(.dark) .profil-acad-mini {
+    background: #0f172a;
+    border-color: #334155;
+}
+.profil-acad-mini__txt { margin: 0.2rem 0 0 0; line-height: 1.35; }
+.profil-acad-mini__list { margin: 0.25rem 0 0 0; padding-left: 1rem; line-height: 1.45; }
+
+.profil-reco-hint {
+    font-size: 0.62rem;
+    color: var(--ct3);
+    margin-top: 0.5rem;
+    line-height: 1.35;
 }
 @media (max-width: 860px) {
     .chat-window { width: calc(100vw - 2rem); }
@@ -880,7 +1104,15 @@ onUnmounted(() => {
 .chat-thread__tag--locked  { background: #dcfce7; color: #166534; }
 
 /* Conversation */
-.chat-conv { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.chat-conv {
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
 .chat-conv__head {
     padding: .6rem .9rem; border-bottom: 1px solid var(--cb);
     background: var(--cs); display: flex; align-items: center; gap: .55rem; min-height: 52px;
@@ -907,6 +1139,7 @@ onUnmounted(() => {
     flex: 1; overflow-y: auto; padding: .75rem;
     display: flex; flex-direction: column; gap: .3rem;
     background: var(--cs2); scroll-behavior: smooth;
+    min-height: 0;
 }
 .chat-center-box {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -935,6 +1168,7 @@ onUnmounted(() => {
 
 /* Input */
 .chat-input-zone { padding: .5rem .65rem; border-top: 1px solid var(--cb); background: var(--cs); }
+.chat-input-zone { position: relative; z-index: 2; flex-shrink: 0; }
 .qr-strip { display: flex; flex-wrap: wrap; gap: .28rem; margin-bottom: .4rem; }
 .qr {
     padding: .15rem .5rem; border-radius: 18px; font-size: .65rem; font-weight: 500;

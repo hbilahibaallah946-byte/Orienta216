@@ -22,22 +22,22 @@ public function store(Request $request)
 {
     $request->validate([
         'specialite' => 'required|string|max:255',
+        'licence' => 'nullable|string|max:255',
         'code' => 'nullable|string|max:50',
         'universite' => 'nullable|string|max:255',
         'type_bac' => 'nullable|string|max:100',
         'formule' => 'nullable|string|max:255',
-        'annee' => 'nullable|integer',
         'criteres' => 'nullable|string',
         'description' => 'nullable|string',
     ]);
 
     Filiere::create([
         'specialite' => $request->specialite,
+        'licence' => $request->licence,
         'code' => $request->code,
         'universite' => $request->universite,
         'type_bac' => $request->type_bac,
         'formule' => $request->formule,
-        'annee' => $request->annee,
         'description' => $request->description,
         'criteres' => $request->criteres
             ? array_values(array_filter(array_map('trim', explode(',', $request->criteres))))
@@ -51,22 +51,22 @@ public function store(Request $request)
     {
         $request->validate([
             'specialite'  => 'required|string|max:255',
+            'licence'    => 'nullable|string|max:255',
             'code'        => 'nullable|string|max:50',
             'universite'  => 'nullable|string|max:255',
             'type_bac'    => 'nullable|string|max:100',
             'formule'     => 'nullable|string|max:255',
-            'annee'       => 'nullable|integer',
             'criteres'    => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
         $filiere->update([
             'specialite'  => $request->specialite,
+            'licence'     => $request->licence,
             'code'        => $request->code,
             'universite'  => $request->universite,
             'type_bac'    => $request->type_bac,
             'formule'     => $request->formule,
-            'annee'       => $request->annee,
             'description' => $request->description,
             'criteres'    => $request->criteres
                 ? array_values(array_filter(array_map(

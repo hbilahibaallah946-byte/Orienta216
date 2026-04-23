@@ -20,7 +20,7 @@ class UniversityPdfController extends BaseController
     {
         $pdf = UniversityPdf::getCurrent();
 
-        return Inertia::render('Student/UniversityPdfViewer', [
+        return Inertia::render('Etudiant/UniversityPdfViewer', [
             'pdf' => $pdf ? [
                 'url' => $pdf->url,
                 'filename' => $pdf->filename,

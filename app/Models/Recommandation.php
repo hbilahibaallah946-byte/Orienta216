@@ -14,12 +14,22 @@ class Recommandation extends Model
         'etudiant_id',
         'filiere_id',
         'score',
+        'score_academique',
+        'score_compatibilite',
+        'score_competitivite',
+        'score_reference_marche',
+        'accessible_selon_bac',
         'rang',
     ];
 
     protected $casts = [
         'score' => 'integer',
         'rang'  => 'integer',
+        'score_academique' => 'integer',
+        'score_compatibilite' => 'integer',
+        'score_competitivite' => 'integer',
+        'score_reference_marche' => 'decimal:3',
+        'accessible_selon_bac' => 'boolean',
     ];
 
     // ── Relations ──────────────────────────────────────────────────────────────

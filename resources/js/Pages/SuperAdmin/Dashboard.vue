@@ -31,9 +31,11 @@
             </div>
         </div>
     </AuthenticatedLayout>
+    <AdminCommentPanel />  
 </template>
 
 <script setup>
+import AdminCommentPanel from '@/Components/AdminCommentPanel.vue'
 import { Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 

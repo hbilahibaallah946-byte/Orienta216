@@ -28,6 +28,7 @@ use App\Models\Recommandation;
 use App\Http\Controllers\RecommandationController;
 use App\Http\Controllers\QuestionnaireController;
 use App\Http\Controllers\UniversityPdfController;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,12 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+// Rafraîchit explicitement le token CSRF (utile pour le chat AJAX après expiration session)
+Route::get('/csrf-token', function (Request $request) {
+    $request->session()->regenerateToken();
+    return response()->json(['token' => csrf_token()]);
+})->middleware('web');
 
 /*
 |--------------------------------------------------------------------------
@@ -86,7 +93,14 @@ Route::middleware(['auth'])->group(function () {
     // Profil & Recommandations
     Route::get('/api/profil/moi', [RecommandationController::class, 'moi']);
     Route::post('/api/profil/recalculer', [RecommandationController::class, 'recalculer']);
+    Route::post('/api/profil/recalculer-etudiant/{id}', [RecommandationController::class, 'recalculerEtudiant']);
     Route::get('/api/profil/etudiant/{id}', [RecommandationController::class, 'etudiant']);
+// Comment Wall API
+Route::get('/api/comments', [App\Http\Controllers\CommentController::class, 'index']);
+Route::post('/api/comments', [App\Http\Controllers\CommentController::class, 'store']);
+Route::delete('/api/comments/{id}', [App\Http\Controllers\CommentController::class, 'destroy']);
+Route::post('/api/comments/{id}/react', [App\Http\Controllers\CommentController::class, 'react']);
+Route::post('/api/comments/{id}/report', [App\Http\Controllers\CommentController::class, 'report']);
 });
 
 /*
@@ -128,7 +142,10 @@ Route::middleware(['auth', 'role:conseiller'])->prefix('conseiller')->name('cons
     Route::get('/etudiants/{id}', [ConseillerController::class, 'showEtudiant'])->name('etudiants.show');
     Route::get('/filieres', [ConseillerController::class, 'filieres'])->name('filieres.index');
     Route::post('/filieres', [ConseillerController::class, 'storeFiliere'])->name('filieres.store');
+    Route::put('/filieres/{filiere}', [ConseillerController::class, 'updateFiliere'])->name('filieres.update');
     Route::delete('/filieres/{id}', [ConseillerController::class, 'destroyFiliere'])->name('filieres.destroy');
+    Route::post('/filieres/import-pdf', [ConseillerController::class, 'importFilieresFromPdf'])->name('filieres.import-pdf');
+    Route::post('/filieres/import-csv', [ConseillerController::class, 'importFilieresFromCsv'])->name('filieres.import-csv');
     Route::get('/questionnaires', [QuestionnaireController::class, 'index'])->name('questionnaires.index');
     Route::post('/questionnaires', [QuestionnaireController::class, 'store'])->name('questionnaires.store');
     Route::get('/questionnaires/{questionnaire}/resultats', [QuestionnaireController::class, 'resultats'])->name('questionnaires.resultats');

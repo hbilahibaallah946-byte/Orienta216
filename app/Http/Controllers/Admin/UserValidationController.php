@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\AccountApprovedNotification;
+use App\Notifications\AccountRejectedNotification;
 
 class UserValidationController extends Controller
 {
@@ -41,16 +43,18 @@ class UserValidationController extends Controller
             ]);
             
             if ($user->status === 'pending') {
-                // Mettre à jour uniquement le statut (sans validated_by et validated_at)
                 $user->status = 'approved';
                 $user->save();
                 
-                Log::info('Approbation réussie', [
+                // ⚠️ Envoi de l'email de confirmation
+                $user->notify(new AccountApprovedNotification());
+                
+                Log::info('Approbation réussie et email envoyé', [
                     'user_id' => $user->id,
                     'new_status' => $user->status
                 ]);
                 
-                return redirect()->back()->with('success', "Le compte de {$user->name} a été approuvé");
+                return redirect()->back()->with('success', "Le compte de {$user->name} a été approuvé et un email de confirmation a été envoyé.");
             }
             
             return redirect()->back()->with('error', 'Cette demande ne peut pas être approuvée');
@@ -64,7 +68,7 @@ class UserValidationController extends Controller
         }
     }
 
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
         try {
             $user = User::findOrFail($id);
@@ -73,7 +77,13 @@ class UserValidationController extends Controller
                 $user->status = 'rejected';
                 $user->save();
                 
-                return redirect()->back()->with('success', "Le compte de {$user->name} a été refusé");
+                // Optionnel : récupérer une raison depuis la requête
+                $raison = $request->input('raison');
+                
+                // Envoi de l'email de refus
+                $user->notify(new AccountRejectedNotification($raison));
+                
+                return redirect()->back()->with('success', "Le compte de {$user->name} a été refusé et un email a été envoyé.");
             }
             
             return redirect()->back()->with('error', 'Cette demande ne peut pas être refusée');
