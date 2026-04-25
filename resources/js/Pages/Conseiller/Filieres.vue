@@ -12,8 +12,8 @@
 
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg transition-colors duration-300">
                     <div class="p-6 text-gray-900 dark:text-gray-100">
-                        <h1 class="text-2xl font-bold mb-6">Gestion des filières</h1>
 
+                        <!-- Import PDF -->
                         <div class="mb-8 bg-amber-50 dark:bg-amber-900/20 p-6 rounded-lg border border-amber-200 dark:border-amber-700">
                             <h2 class="text-lg font-semibold mb-4 dark:text-gray-200">Remplacer toutes les filières depuis PDF</h2>
                             <p class="text-sm mb-3 text-gray-700 dark:text-gray-300">
@@ -36,12 +36,13 @@
                                 <button
                                     type="submit"
                                     :disabled="importForm.processing"
-                                    class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded disabled:opacity-50 transition">
+                                    class="bg-amber-700 hover:bg-amber-800 text-white px-5 py-2 rounded-full disabled:opacity-50 transition">
                                     {{ importForm.processing ? 'Import en cours...' : 'Remplacer toutes les filières' }}
                                 </button>
                             </form>
                         </div>
 
+                        <!-- Import CSV -->
                         <div class="mb-8 bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-lg border border-emerald-200 dark:border-emerald-700">
                             <h2 class="text-lg font-semibold mb-4 dark:text-gray-200">Remplacer toutes les filières depuis CSV (recommandé)</h2>
                             <p class="text-sm mb-3 text-gray-700 dark:text-gray-300">
@@ -64,13 +65,13 @@
                                 <button
                                     type="submit"
                                     :disabled="csvForm.processing"
-                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded disabled:opacity-50 transition">
+                                    class="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2 rounded-full disabled:opacity-50 transition">
                                     {{ csvForm.processing ? 'Import CSV en cours...' : 'Remplacer toutes les filières (CSV)' }}
                                 </button>
                             </form>
                         </div>
                         
-                        <!-- Formulaire d'ajout -->
+                        <!-- Ajouter une filière -->
                         <div class="mb-8 bg-gray-50 dark:bg-gray-700 p-6 rounded-lg transition-colors duration-300">
                             <h2 class="text-lg font-semibold mb-4 dark:text-gray-200">Ajouter une nouvelle filière</h2>
                             <form @submit.prevent="addFiliere" class="space-y-4">
@@ -141,7 +142,7 @@
                                 <button 
                                     type="submit" 
                                     :disabled="form.processing"
-                                    class="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50 transition">
+                                    class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded-full disabled:opacity-50 transition">
                                     {{ form.processing ? 'Ajout...' : '+ Ajouter la filière' }}
                                 </button>
                             </form>
@@ -154,7 +155,7 @@
                                    class="w-full max-w-md p-3 border rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"/>
                         </div>
 
-                        <!-- Liste des filières groupées par bandeau -->
+                        <!-- Liste des filières -->
                         <div>
                             <h2 class="text-lg font-semibold mb-4 dark:text-gray-200">
                                 Liste des filières 
@@ -179,7 +180,6 @@
                                     </thead>
                                     <tbody>
                                         <template v-for="(group, gIdx) in groupedFilieres" :key="`g-${gIdx}`">
-                                            <!-- Bandeau row (colored section header) -->
                                             <tr class="bg-indigo-50/80 dark:bg-indigo-900/30 border-t-2 border-indigo-300 dark:border-indigo-700">
                                                 <td colspan="11" class="px-4 py-2 font-bold text-indigo-800 dark:text-indigo-200 text-sm">
                                                     <span class="inline-block w-3 h-3 rounded-full mr-2" :style="{ backgroundColor: bandeauColor(gIdx) }"></span>
@@ -213,13 +213,13 @@
                                                 <td class="px-4 py-3">
                                                     <button
                                                         @click="startEdit(filiere)"
-                                                        class="mr-3 text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 text-sm">
+                                                        class="mr-2 px-3 py-1 border-2 border-indigo-700 dark:border-indigo-400 text-indigo-700 dark:text-indigo-300 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm transition">
                                                         Modifier
                                                     </button>
                                                     <button 
                                                         @click="deleteFiliere(filiere.id)"
                                                         :disabled="deleting === filiere.id"
-                                                        class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 disabled:opacity-50 text-sm">
+                                                        class="px-3 py-1 border-2 border-red-700 dark:border-red-400 text-red-700 dark:text-red-300 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50 text-sm transition">
                                                         {{ deleting === filiere.id ? '...' : 'Supprimer' }}
                                                     </button>
                                                 </td>
@@ -237,6 +237,7 @@
                             </div>
                         </div>
 
+                        <!-- Formulaire d'édition -->
                         <div v-if="editing" class="mt-8 bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-lg border border-indigo-200 dark:border-indigo-700">
                             <h2 class="text-lg font-semibold mb-4 dark:text-gray-200">Modifier la filière #{{ editing.id }}</h2>
                             <form @submit.prevent="saveEdit" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -247,8 +248,12 @@
                                 <input v-model="editing.type_bac" class="border rounded p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white" placeholder="Type bac">
                                 <input v-model="editing.formule" class="border rounded p-2 dark:bg-gray-800 dark:border-gray-600 dark:text-white" placeholder="Formule">
                                 <div class="md:col-span-2 flex gap-2">
-                                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">Enregistrer</button>
-                                    <button type="button" @click="cancelEdit" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">Annuler</button>
+                                    <button type="submit" class="bg-indigo-700 hover:bg-indigo-800 text-white px-5 py-2 rounded-full transition">
+                                        Enregistrer
+                                    </button>
+                                    <button type="button" @click="cancelEdit" class="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2 rounded-full transition">
+                                        Annuler
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -260,6 +265,7 @@
 </template>
 
 <script setup>
+// Le script reste identique à votre version précédente
 import { ref, computed } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
@@ -291,7 +297,6 @@ const csvForm = useForm({
     csv_file: null,
 })
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 const ARABIC_REGEX = /[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]/
 
 function isArabic(text) {
@@ -313,7 +318,6 @@ function bandeauColor(idx) {
     return BANDEAU_COLORS[idx % BANDEAU_COLORS.length]
 }
 
-// ── Grouped filières (same ordering as file: grouped by bandeau/critères) ──
 const filteredFilieres = computed(() => {
     if (!searchQuery.value) return props.filieres
     const s = searchQuery.value.toLowerCase()
@@ -342,7 +346,6 @@ const groupedFilieres = computed(() => {
     return Array.from(map.entries()).map(([label, rows]) => ({ label, rows }))
 })
 
-// ── Actions ────────────────────────────────────────────────────────────────
 function addFiliere() {
     form.post(route('conseiller.filieres.store'), {
         onSuccess: () => {

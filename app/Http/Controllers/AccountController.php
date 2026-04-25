@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 
+
 class AccountController extends Controller
 {
     public function destroy(Request $request)

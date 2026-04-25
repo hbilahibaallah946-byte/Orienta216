@@ -110,44 +110,6 @@ class QuestionnaireController extends Controller
     }
 
     // ── ÉTUDIANT ──────────────────────────────────────────────────────────────
-
-    public function mesQuestionnaires()
-    {
-        $questionnaires = Questionnaire::with(['conseiller:id,name', 'questions'])
-            ->where('etudiant_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return inertia('Etudiant/Questionnaires/Index', [
-            'questionnaires' => $questionnaires,
-        ]);
-    }
-
-    public function repondre(Questionnaire $questionnaire)
-    {
-        if ($questionnaire->etudiant_id !== Auth::id()) abort(403);
-
-        $questionnaire->load('questions');
-
-        $reponsesExistantes = Reponse::where('questionnaire_id', $questionnaire->id)
-            ->where('etudiant_id', Auth::id())
-            ->get()
-            ->keyBy('question_id')
-            ->map(fn($r) => $r->reponse)
-            ->toArray();
-
-        return inertia('Etudiant/Questionnaires/Repondre', [
-            'questionnaire'      => $questionnaire,
-            'reponsesExistantes' => $reponsesExistantes,
-        ]);
-    }
-
-    /**
-     * ✅ CORRECTION PRINCIPALE :
-     *   - Retourne redirect() au lieu de response()->json()
-     *   - Compatible avec useForm.post() dans Repondre.vue
-     *   - Le flash message s'affiche automatiquement via $page.props.flash
-     */
     public function soumettreReponses(Request $request, Questionnaire $questionnaire)
     {
         if ($questionnaire->etudiant_id !== Auth::id()) abort(403);
@@ -191,7 +153,7 @@ class QuestionnaireController extends Controller
 
         // ✅ Redirect Inertia → flash géré automatiquement dans $page.props.flash
         return redirect()
-            ->route('etudiant.questionnaires.index')
+            ->route('etudiant.dashboard')
             ->with('success', '✅ Réponses envoyées ! Vos recommandations ont été mises à jour.');
     }
 }

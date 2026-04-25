@@ -24,7 +24,7 @@ class User extends Authenticatable
         'validated_at',
         'preferred_language',
         'language',
-        'filiere_id', // Ajouter cette ligne
+        'filiere_id', 
     ];
 
     protected $hidden = [

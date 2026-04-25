@@ -1,3 +1,4 @@
+<!-- resources/js/Layouts/AuthenticatedLayout.vue -->
 <template>
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
         <nav class="bg-white dark:bg-gray-800 shadow-md transition-colors duration-300">
@@ -28,11 +29,8 @@
                                 </a>
                             </template>
                             
-                            <!-- Menu Conseiller -->
+                            <!-- Menu Conseiller (Dashboard supprimé) -->
                             <template v-else-if="$page.props.auth.user.role === 'conseiller'">
-                                <a :href="route('conseiller.dashboard')" class="nav-link">
-                                    Dashboard
-                                </a>
                                 <a :href="route('conseiller.etudiants.index')" class="nav-link">
                                     Étudiants
                                 </a>
@@ -45,9 +43,8 @@
                                 <a :href="route('conseiller.statistiques')" class="nav-link">
                                     Statistiques
                                 </a>
-                                <!-- ✅ Nouveau lien -->
                                 <Link :href="route('conseiller.university-pdf.manage')" class="nav-link">
-                                      Universités privées
+                                    Universités privées
                                 </Link>
                             </template>
                             
@@ -62,7 +59,6 @@
                                 <Link :href="route('moyennes.index')" class="nav-link">
                                     Mes Moyennes
                                 </Link>
-                                <!-- ✅ Nouveau lien -->
                                 <Link :href="route('etudiant.private-universities')" class="nav-link">
                                     Universités Privées
                                 </Link>
@@ -105,6 +101,9 @@
         <main>
             <slot />
         </main>
+
+        <!-- Chat visible sur toutes les pages -->
+        <ChatIcon />
     </div>
 </template>
 
@@ -112,11 +111,9 @@
 import { Link } from '@inertiajs/vue3'
 import { router, usePage } from '@inertiajs/vue3'
 import { computed, ref, onMounted } from 'vue'
+import ChatIcon from '@/Components/ChatIcon.vue'   // <-- ajout
 
 const page = usePage()
-
-
-
 
 const pendingCount = computed(() => page.props.pendingCount || 0)
 

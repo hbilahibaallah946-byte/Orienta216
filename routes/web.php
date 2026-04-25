@@ -168,19 +168,23 @@ Route::middleware(['auth', 'role:conseiller'])->prefix('conseiller')->name('cons
 Route::middleware(['auth', 'role:etudiant'])->prefix('etudiant')->name('etudiant.')->group(function () {
 
     Route::get('/dashboard', function () {
-        return Inertia::render('Etudiant/Dashboard', [
-            'filieres' => Filiere::all(),
-            'moyennes' => [],
-            'user' => Auth::user(),
-            'flash' => [
-                'success' => session('success'),
-                'error' => session('error'),
-            ],
-        ]);
-    })->name('dashboard');
+    $questionnaires = \App\Models\Questionnaire::with(['conseiller:id,name', 'questions'])
+        ->where('etudiant_id', Auth::id())
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-    Route::get('/questionnaires', [QuestionnaireController::class, 'mesQuestionnaires'])->name('questionnaires.index');
-    Route::get('/questionnaires/{questionnaire}/repondre', [QuestionnaireController::class, 'repondre'])->name('questionnaires.repondre');
+    return Inertia::render('Etudiant/Dashboard', [
+        'filieres' => Filiere::all(),
+        'moyennes' => [],
+        'user' => Auth::user(),
+        'questionnaires' => $questionnaires, // ← ajouté
+        'flash' => [
+            'success' => session('success'),
+            'error' => session('error'),
+        ],
+    ]);
+})->name('dashboard');
+
     Route::post('/questionnaires/{questionnaire}/reponses', [QuestionnaireController::class, 'soumettreReponses'])->name('questionnaires.soumettre');
     Route::get('/notes', [MoyenneController::class, 'index'])->name('notes');
     Route::get('/moyennes', [MoyenneController::class, 'index'])->name('moyennes.index');
